@@ -4,22 +4,26 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { LayoutDashboard, MessageSquare, MapPin, Calendar, User, Trash2, ArrowLeft } from 'lucide-react';
 
-// Define Note interface (same as in app/page.tsx)
-interface Note {
+// Define Post interface (updated from Note)
+interface Post {
   id: number;
   title: string;
   content: string;
   category: string;
   location?: string;
-  author_name: string;
+  author_id: number;
+  email: string;
+  display_name: string;
+  profile_picture_url?: string;
+  image_url?: string;
   created_at?: string;
 }
 
 export default function DashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
-  const [myNotes, setMyNotes] = useState<Note[]>([]);
-  const [notesLoading, setNotesLoading] = useState(true);
+  const [myPosts, setMyPosts] = useState<Post[]>([]);
+  const [postsLoading, setPostsLoading] = useState(true);
 
   // 1. Redirect if not logged in
   useEffect(() => {
@@ -28,47 +32,47 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  // 2. Fetch Notes and Filter by Current User
+// 2. Fetch Posts and Filter by Current User
   useEffect(() => {
-    const fetchAndFilterNotes = async () => {
+    const fetchAndFilterPosts = async () => {
       if (!user) return;
       
       try {
-        // Fetch all notes from the MySQL API route
-        const res = await fetch('/api/notes');
+        // Fetch all posts from the API route
+        const res = await fetch('/api/posts');
         
         // Ensure response is successful
         if (!res.ok) {
-            throw new Error(`Failed to fetch notes: ${res.status} ${res.statusText}`);
+            throw new Error(`Failed to fetch posts: ${res.status} ${res.statusText}`);
         }
         
         const data = await res.json();
         
         // ** THE FIX **: Ensure data is an array. 
-        // Handles cases where API returns just an array, or an object like { notes: [...] } or { data: [...] }
-        const allNotes = Array.isArray(data) ? data : data.notes || data.data || [];
-
+        // Handles cases where API returns just an array, or an object like { posts: [...] } or { data: [...] }
+        const allPosts = Array.isArray(data) ? data : data.posts || data.data || [];
+        
         // Final safety check to ensure we are working with an array
-        if (!Array.isArray(allNotes)) {
+        if (!Array.isArray(allPosts)) {
              console.error("API response is not a valid array structure. Received:", data);
-             setMyNotes([]);
+             setMyPosts([]);
              return;
         }
 
-        // Filter notes by the current Firebase User's email
-        const filtered = allNotes.filter((note: Note) => note.author_name === user.email);
+        // Filter posts by the current Firebase User's email
+        const filtered = allPosts.filter((post: Post) => post.email === user.email);
         
-        setMyNotes(filtered);
+        setMyPosts(filtered);
       } catch (error) {
-        console.error("Failed to fetch dashboard notes:", error);
-        setMyNotes([]); // Reset notes on error
+        console.error("Failed to fetch dashboard posts:", error);
+        setMyPosts([]); // Reset posts on error
       } finally {
-        setNotesLoading(false);
+        setPostsLoading(false);
       }
     };
 
     if (user) {
-      fetchAndFilterNotes();
+      fetchAndFilterPosts();
     }
   }, [user]);
   
@@ -88,8 +92,17 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-stone-50 font-sans text-stone-800 p-4 sm:p-8">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen bg-stone-50 font-sans text-stone-800 p-4 sm:p-8"
+         style={{
+           backgroundImage: `url('https://marketplace.canva.com/EAGEncMdbEM/1/0/1600w/canva-beige-brown-simple-abstract-desktop-wallpaper-pE_Ruap0PiI.jpg')`,
+           backgroundSize: 'cover',
+           backgroundPosition: 'center',
+           backgroundRepeat: 'no-repeat'
+         }}>
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/20"></div>
+
+      <div className="relative max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold text-emerald-700 flex items-center gap-3 mb-8">
           <LayoutDashboard className="w-7 h-7" />
           Your Personal Dashboard
@@ -105,13 +118,13 @@ export default function DashboardPage() {
           </p>
         </div>
         
-        <h2 className="text-2xl font-semibold mb-6 text-stone-800">Your Posted Notes ({myNotes.length})</h2>
+        <h2 className="text-2xl font-semibold mb-6 text-stone-800">Your Posted Posts ({myPosts.length})</h2>
 
-        {notesLoading ? (
-          <div className="text-center py-10 text-stone-400">Loading your notes...</div>
-        ) : myNotes.length === 0 ? (
+        {postsLoading ? (
+          <div className="text-center py-10 text-stone-400">Loading your posts...</div>
+        ) : myPosts.length === 0 ? (
           <div className="text-center py-10 bg-white rounded-xl shadow-inner border border-stone-200">
-            <p className="text-lg text-stone-500">You haven't posted any notes yet.</p>
+            <p className="text-lg text-stone-500">You haven't posted any posts yet.</p>
             <button 
                 onClick={() => router.push('/')}
                 className="mt-4 text-emerald-600 hover:text-emerald-800 flex items-center justify-center mx-auto"
@@ -121,17 +134,31 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {myNotes.map(note => (
-              <div key={note.id} className="bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col h-full">
-                <span className={`mb-3 px-2 py-1 rounded text-xs font-semibold self-start ${getCategoryColor(note.category)}`}>
-                  {note.category}
+            {myPosts.map(post => (
+              <div key={post.id} className="bg-white p-6 rounded-xl shadow-sm border border-stone-200 flex flex-col h-full">
+                <span className={`mb-3 px-2 py-1 rounded text-xs font-semibold self-start ${getCategoryColor(post.category)}`}>
+                  {post.category}
                 </span>
-                <h3 className="text-xl font-bold text-stone-800 mb-2">{note.title}</h3>
-                <p className="text-stone-600 mb-4 flex-grow whitespace-pre-wrap text-sm">{note.content}</p>
+
+                {post.image_url && (
+                  <div className="mb-4">
+                    <img
+                      src={post.image_url}
+                      alt="Post image"
+                      className="w-full h-32 object-cover rounded-lg"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+
+                <h3 className="text-xl font-bold text-stone-800 mb-2">{post.title}</h3>
+                <p className="text-stone-600 mb-4 flex-grow whitespace-pre-wrap text-sm">{post.content}</p>
                 <div className="pt-3 border-t border-stone-100 flex justify-between items-center text-xs text-stone-400">
                     <div className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        {note.location || 'Local Area'}
+                        {post.location || 'Local Area'}
                     </div>
                     {/* Placeholder for Delete Button: Note: Deletion API is not implemented yet */}
                     {/* <button className="text-red-400 hover:text-red-600 transition-colors">

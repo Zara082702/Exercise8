@@ -57,8 +57,17 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-stone-200">
+    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4"
+         style={{
+           backgroundImage: `url('https://marketplace.canva.com/EAGEncMdbEM/1/0/1600w/canva-beige-brown-simple-abstract-desktop-wallpaper-pE_Ruap0PiI.jpg')`,
+           backgroundSize: 'cover',
+           backgroundPosition: 'center',
+           backgroundRepeat: 'no-repeat'
+         }}>
+      {/* Overlay for better text readability */}
+      <div className="absolute inset-0 bg-black/40"></div>
+
+      <div className="relative w-full max-w-md bg-white/95 backdrop-blur-sm p-8 rounded-2xl shadow-xl border border-white/20">
         <div className="flex flex-col items-center mb-8">
           <MessageSquare className="w-10 h-10 text-emerald-600 mb-2" />
           <h1 className="text-3xl font-bold text-stone-800">NeighborNotes</h1>
@@ -97,13 +106,13 @@ export default function AuthPage() {
             placeholder="Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-800 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
           />
           <input
             required
             type="password"
             placeholder="Password (Min 6 characters)"
-            className="w-full px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-black placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full px-4 py-2 bg-white border border-stone-300 rounded-lg text-stone-800 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
